@@ -1,0 +1,6 @@
+*.o
+*.gch
+*.swp
+Makefile
+triangulation
+.ycm_extra_conf.pyc
