@@ -27,7 +27,18 @@ INCLUDEPATH += src \
 
 HEADERS += src/stdafx.h \
            src/viewer.h \
+           src/contour_builder.h \
+           src/edge_list.h \
+           src/monotonic_triangulation.h \
+           src/polygon.h \
+           src/triangulation.h \
+           src/util.h \
 
 SOURCES += src/main.cpp \
+           src/contour_builder.cpp \
+           src/edge_list.cpp \
+           src/monotonic_triangulation.cpp \
+           src/polygon.cpp \
+           src/triangulation.cpp \
 
 LIBS += -Lvisualization -lvisualization
