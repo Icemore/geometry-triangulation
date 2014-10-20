@@ -6,9 +6,13 @@
 #include "util.h"
 #include "edge_list.h"
 #include "geom/primitives/contour.h"
+#include "geom/primitives/segment.h"
+
 using geom::structures::point_type;
+using geom::structures::segment_type;
 using geom::predicates::turn;
 using geom::predicates::turn_type;
+
 
 namespace geom {
 namespace algorithms {
@@ -22,18 +26,18 @@ namespace triangulation {
             convert_to_points(polygon);
         }
 
-        std::vector<triangle_type> triangulate()
+        std::vector<segment_type> triangulate()
         {
-            // sort points
             auto vertex_cmp = [&](vertex_t const & v1, vertex_t const & v2)
                 {
                     return pts_[v1.idx] < pts_[v2.idx];
                 };
             boost::sort(vertexes_, vertex_cmp);
             
-            // TODO: scan vertexes and do stuff
+            for(vertex_t const & vtx : vertexes_)
+                process_vertex(vtx);
 
-            return std::vector<triangle_type>();
+            return edges_.get_segments();
         }
         
     private:
@@ -76,6 +80,9 @@ namespace triangulation {
 
             bool operator()(edge_t const & e1, edge_t const & e2) const
             {
+                if(pts_[e1.from] == pts_[e2.from])
+                    return pts_[e1.to].y < pts_[e2.to].y;
+
                 if(pts_[e1.from] < pts_[e2.from])
                     return turn(pts_[e1.to], pts_[e2.from], pts_[e1.from]) == 
                         turn_type::LEFT;
@@ -100,8 +107,8 @@ namespace triangulation {
                 for(size_t i = 0; i < cnt.vertices_num(); ++i)
                 {
                     size_t cur_idx = pts_.size();
-                    size_t prev_idx = i == 0 ? first_idx + cnt.vertices_num() - 1 : i - 1;
-                    size_t next_idx = i + 1 == cnt.vertices_num() ? first_idx : i + 1;
+                    size_t prev_idx = i == 0 ? first_idx + cnt.vertices_num() - 1 : first_idx + i - 1;
+                    size_t next_idx = i + 1 == cnt.vertices_num() ? first_idx : first_idx + i + 1;
 
                     pts_.push_back(cnt[i]);
                     vertexes_.push_back(vertex_t(cur_idx, prev_idx, next_idx));
@@ -132,13 +139,25 @@ namespace triangulation {
 
             return vertex_kind::REGULAR;
         }
-        
+
+        void print_status()
+        {
+            for(auto t : status_)
+            {
+                std::cerr << "\t" << "(" << t.first.from << " " << t.first.to << ") = " << t.second.idx << std::endl;
+            }
+        }
+
         void add_edge(size_t from, size_t to, bool merge = false)
         {
             edge_t edge(from, to);
             helper_t helper(from, merge);
 
+            std::cerr << "status adding edge (" << from << " " << to << ")" << std::endl;
+
             status_.insert(std::make_pair(edge, helper));
+
+            print_status();
         }
 
         void remove_edge(size_t from, size_t to)
@@ -146,27 +165,102 @@ namespace triangulation {
             edge_t edge(from, to);
             auto it = status_.find(edge);
 
+            std::cerr << "status removing edge (" << from << " " << to << ")" << std::endl;
+
             helper_t helper = it->second;
             if(helper.merge)
                 edges_.add_edge(helper.idx, to);
 
             status_.erase(it);
+
+            print_status();
         }
 
         helper_t update_helper(size_t idx, bool merge = false)
         {
             edge_t edge(idx, 0);
             auto it = status_.upper_bound(edge);
+
+            std::cerr << "updating status for " << idx  << " merge=" << merge << std::endl;
+            std::cerr << "\tit found " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+
+            if(it == status_.begin())
+                return helper_t(-1, false);
+
             --it;
-            
+
+            std::cerr << "\tit prev " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+
             helper_t old = it->second;
             it->second = helper_t(idx, merge); 
 
+            std::cerr << "\tit written " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+
+            if(old.merge)
+                edges_.add_edge(old.idx, idx);
+
+            print_status();
+
             return old;
+        }
+
+        void process_vertex(vertex_t const & vtx)
+        {
+            vertex_kind kind = get_vertex_kind(vtx);
+
+            std::cerr << "processing " << vtx.idx << " kind ";
+
+            switch(kind)
+            {
+                case vertex_kind::START:
+                    std::cerr << "START" << std::endl;
+                    add_edge(vtx.idx, vtx.next);
+                    add_edge(vtx.idx, vtx.prev);
+                    break;
+
+                case vertex_kind::FINISH:
+                    std::cerr << "FINISH" << std::endl;
+                    remove_edge(vtx.next, vtx.idx);
+                    remove_edge(vtx.prev, vtx.idx);
+                    break;
+
+                case vertex_kind::MERGE:
+                    std::cerr << "MERGE" << std::endl;
+                    remove_edge(vtx.next, vtx.idx);
+                    remove_edge(vtx.prev, vtx.idx);
+                    update_helper(vtx.idx, true);
+                    break;
+
+                case vertex_kind::SPLIT:
+                {
+                    std::cerr << "SPLIT" << std::endl;
+                    helper_t old = update_helper(vtx.idx);
+                    if(!old.merge)
+                        edges_.add_edge(old.idx, vtx.idx);
+
+                    add_edge(vtx.idx, vtx.next);
+                    add_edge(vtx.idx, vtx.prev);
+                }
+                    break;
+
+                case vertex_kind::REGULAR:
+                {
+                    std::cerr << "REGULAR" << std::endl;
+                    size_t left_idx = vtx.prev;
+                    size_t right_idx = vtx.next;
+                    if(pts_[right_idx] < pts_[vtx.idx])
+                        std::swap(left_idx, right_idx);
+
+                    remove_edge(left_idx, vtx.idx);
+                    update_helper(vtx.idx);
+                    add_edge(vtx.idx, right_idx);
+                }
+                    break;
+            }
         }
     };
 
-    std::vector<triangle_type> triangulate(polygon_type const & polygon)
+    std::vector<segment_type> triangulate(polygon_type const & polygon)
     {
         triangulator solver(polygon);
         return solver.triangulate();

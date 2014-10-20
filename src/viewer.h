@@ -26,6 +26,8 @@ private:
     std::unique_ptr<contour_builder_type> contour_builder_;
     std::unique_ptr<polygon_type> polygon_;
     point_type cursor_point_;
+
+    std::vector<segment_type> segments_;
 };
 
 triangulation_viewer::triangulation_viewer()
@@ -48,7 +50,6 @@ namespace visualization {
 
 void triangulation_viewer::draw(drawer_type & drawer) const
 {
-
     if(polygon_)
     {
         auto & bounds = polygon_->get_bounds();
@@ -70,6 +71,12 @@ void triangulation_viewer::draw(drawer_type & drawer) const
         draw_chain(drawer, contour_builder_->pts_);
         drawer.draw_line(segment_type(cursor_point_, contour_builder_->pts_.back()));
         drawer.draw_point(cursor_point_, 3);
+    }
+
+    drawer.set_color(Qt::green);
+    for(auto seg : segments_)
+    {
+        drawer.draw_line(seg);
     }
 }
 
@@ -118,6 +125,7 @@ bool triangulation_viewer::on_key(int key)
         case Qt::Key_R:
             polygon_.reset();
             contour_builder_.reset();
+            segments_.clear();
             return true;
 
         case Qt::Key_Escape:
@@ -132,7 +140,8 @@ bool triangulation_viewer::on_key(int key)
             if(polygon_)
             {
                 contour_builder_.reset();
-                geom::algorithms::triangulation::triangulate(*polygon_);
+                segments_ = geom::algorithms::triangulation::triangulate(*polygon_);
+                return true;
             }
     }
 

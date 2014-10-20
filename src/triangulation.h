@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "geom/primitives/triangle.h"
+#include "geom/primitives/segment.h"
 #include "polygon.h"
 
 namespace geom {
@@ -10,7 +11,8 @@ namespace triangulation {
     
     using geom::structures::triangle_type;
     using geom::structures::polygon_type;
+    using geom::structures::segment_type;
 
-    std::vector<triangle_type> triangulate(polygon_type const & polygon);
+    std::vector<segment_type> triangulate(polygon_type const & polygon);
 
 }}}
