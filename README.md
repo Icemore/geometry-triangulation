@@ -16,7 +16,6 @@ Polygon triangulation algorithm with visualization
 
 Enter polygon by first specifying outer bound, and then by specifying inner bounds.
 Polygon must be correct, i.e. without self-intersections and with nonintersecting holes strictly inside polygon.
-Outer bound must be oriented CCW, inner bounds must be oriented CW.
 
 | Action                                   | Key          |
 |------------------------------------------|--------------|

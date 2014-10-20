@@ -10,3 +10,5 @@
 #include <QApplication>
 #include <QWidget>
 #include <QFileDialog>
+#include <boost/optional.hpp>
+using boost::optional;

@@ -14,7 +14,7 @@ namespace structures {
         void add_inner_bound(contour_type && inner);
         std::vector<contour_type> const & get_bounds() const;
 
-        private:
+    private:
             std::vector<contour_type> bounds;
     };
 }
