@@ -40,5 +40,6 @@ SOURCES += src/main.cpp \
            src/monotonic_triangulation.cpp \
            src/polygon.cpp \
            src/triangulation.cpp \
+           src/util.cpp \
 
 LIBS += -Lvisualization -lvisualization

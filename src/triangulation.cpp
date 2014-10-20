@@ -37,7 +37,9 @@ namespace triangulation {
             for(vertex_t const & vtx : vertexes_)
                 process_vertex(vtx);
 
-            return edges_.get_segments();
+            edges_.get_closed_areas();
+
+            return std::vector<segment_type>();
         }
         
     private:
@@ -116,7 +118,7 @@ namespace triangulation {
             }
 
             for(vertex_t const & v : vertexes_)
-                edges_.add_edge(v.idx, v.next);
+                edges_.add_edge(v.idx, v.next, true);
         }
 
         vertex_kind get_vertex_kind(vertex_t const & v) const
