@@ -34,6 +34,7 @@ HEADERS += src/stdafx.h \
            src/triangulation.h \
            src/util.h \
            src/logging.h \
+           src/io.h \
 
 SOURCES += src/main.cpp \
            src/contour_builder.cpp \

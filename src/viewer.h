@@ -1,7 +1,7 @@
 #include "visualization/viewer_adapter.h"
 #include "visualization/draw_util.h"
 
-#include "io/point.h"
+#include "io.h"
 
 #include "contour_builder.h"
 #include "polygon.h"
@@ -102,7 +102,10 @@ void triangulation_viewer::print(printer_type & printer) const
 bool triangulation_viewer::on_double_click(point_type const & pt)
 {
     if(!contour_builder_)
+    {
         contour_builder_.reset(new contour_builder_type());
+        triangles_.clear();
+    }
 
     contour_builder_->add_point(pt);
 
@@ -159,6 +162,34 @@ bool triangulation_viewer::on_key(int key)
         case Qt::Key_W:
             wired_triangles = !wired_triangles;
             return true;
+
+        case Qt::Key_S:
+            if(polygon_)
+            {
+                std::string filename = QFileDialog::getSaveFileName(
+                        get_wnd(), "Save polygon").toStdString();
+                if(filename != "")
+                {
+                    std::ofstream ofs(filename.c_str());
+                    ofs << *polygon_;
+                }
+            }
+            break;
+
+        case Qt::Key_L:
+            {
+                std::string filename = QFileDialog::getOpenFileName(
+                        get_wnd(), "Load polygon").toStdString();
+                if(filename != "")
+                {
+                    using geom::structures::read_polygon;
+                    std::ifstream ifs(filename.c_str());
+                    polygon_.reset(new polygon_type(read_polygon(ifs)));
+                    contour_builder_.reset();
+                    triangles_.clear();
+                    return true;
+                }
+            }
     }
 
     return false;
