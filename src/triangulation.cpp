@@ -8,6 +8,7 @@
 #include "monotonic_triangulation.h"
 #include "geom/primitives/contour.h"
 #include "geom/primitives/segment.h"
+#include "logging.h"
 
 using geom::structures::point_type;
 using geom::structures::segment_type;
@@ -45,11 +46,11 @@ namespace triangulation {
             for(contour_type const & contour : areas)
             {
                 auto triangles = triangulate_monotonic(contour);
-                std::cerr << "triangles got" << std::endl;
+                log() << "triangles got" << std::endl;
                 result.insert(result.end(), triangles.begin(), triangles.end());
             }
 
-            std::cerr << "triangulation finished" << std::endl;
+            log() << "triangulation finished" << std::endl;
             return result;
         }
         
@@ -153,7 +154,7 @@ namespace triangulation {
         {
             for(auto t : status_)
             {
-                std::cerr << "\t" << "(" << t.first.from << " " << t.first.to << ") = " << t.second.idx << std::endl;
+                log() << "\t" << "(" << t.first.from << " " << t.first.to << ") = " << t.second.idx << std::endl;
             }
         }
 
@@ -162,7 +163,7 @@ namespace triangulation {
             edge_t edge(from, to);
             helper_t helper(from, merge);
 
-            std::cerr << "status adding edge (" << from << " " << to << ")" << std::endl;
+            log() << "status adding edge (" << from << " " << to << ")" << std::endl;
 
             status_.insert(std::make_pair(edge, helper));
 
@@ -174,7 +175,7 @@ namespace triangulation {
             edge_t edge(from, to);
             auto it = status_.find(edge);
 
-            std::cerr << "status removing edge (" << from << " " << to << ")" << std::endl;
+            log() << "status removing edge (" << from << " " << to << ")" << std::endl;
 
             helper_t helper = it->second;
             if(helper.merge)
@@ -190,19 +191,19 @@ namespace triangulation {
             edge_t edge(idx, 0);
             auto it = status_.upper_bound(edge);
 
-            std::cerr << "updating status for " << idx  << " merge=" << merge << std::endl;
+            log() << "updating status for " << idx  << " merge=" << merge << std::endl;
 
             if(it == status_.begin())
                 return helper_t(-1, false);
 
             --it;
 
-            std::cerr << "\tit found " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+            log() << "\tit found " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
 
             helper_t old = it->second;
             it->second = helper_t(idx, merge); 
 
-            std::cerr << "\tit written " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+            log() << "\tit written " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
 
             if(old.merge)
                 edges_.add_edge(old.idx, idx);
@@ -216,24 +217,24 @@ namespace triangulation {
         {
             vertex_kind kind = get_vertex_kind(vtx);
 
-            std::cerr << "processing " << vtx.idx << " kind ";
+            log() << "processing " << vtx.idx << " kind ";
 
             switch(kind)
             {
                 case vertex_kind::START:
-                    std::cerr << "START" << std::endl;
+                    log() << "START" << std::endl;
                     add_edge(vtx.idx, vtx.next);
                     add_edge(vtx.idx, vtx.prev);
                     break;
 
                 case vertex_kind::FINISH:
-                    std::cerr << "FINISH" << std::endl;
+                    log() << "FINISH" << std::endl;
                     remove_edge(vtx.next, vtx.idx);
                     remove_edge(vtx.prev, vtx.idx);
                     break;
 
                 case vertex_kind::MERGE:
-                    std::cerr << "MERGE" << std::endl;
+                    log() << "MERGE" << std::endl;
                     remove_edge(vtx.next, vtx.idx);
                     remove_edge(vtx.prev, vtx.idx);
                     update_helper(vtx.idx, true);
@@ -241,7 +242,7 @@ namespace triangulation {
 
                 case vertex_kind::SPLIT:
                 {
-                    std::cerr << "SPLIT" << std::endl;
+                    log() << "SPLIT" << std::endl;
                     helper_t old = update_helper(vtx.idx);
                     if(!old.merge)
                         edges_.add_edge(old.idx, vtx.idx);
@@ -253,7 +254,7 @@ namespace triangulation {
 
                 case vertex_kind::REGULAR:
                 {
-                    std::cerr << "REGULAR" << std::endl;
+                    log() << "REGULAR" << std::endl;
                     size_t left_idx = vtx.prev;
                     size_t right_idx = vtx.next;
                     if(pts_[right_idx] < pts_[vtx.idx])

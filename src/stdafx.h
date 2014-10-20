@@ -4,8 +4,6 @@
 #include <fstream>
 #include <stdexcept>
 
-#include <iostream>
-
 #include <boost/range/iterator.hpp>
 #include <boost/range/algorithm/sort.hpp>
 

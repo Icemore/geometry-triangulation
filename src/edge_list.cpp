@@ -3,6 +3,7 @@
 #include "edge_list.h"
 #include "contour_builder.h"
 #include "util.h"
+#include "logging.h"
 
 namespace geom {
 namespace structures {
@@ -13,15 +14,15 @@ namespace structures {
 
     void edge_list::add_edge(size_t from, size_t to, bool is_on_border)
     {
-        std::cerr << "edge_list: adding edge (" << from << " " << to << ")\n";
+        log() << "edge_list: adding edge (" << from << " " << to << ")\n";
 
         size_t forward_idx = edges_.size();
         edges_.push_back(edge_t(from));
         size_t backward_idx = edges_.size();
         edges_.push_back(edge_t(to, !is_on_border));
 
-        std::cerr << "\tforward_idx=" << forward_idx << std::endl;
-        std::cerr << "\tbackward_idx=" << backward_idx << std::endl;
+        log() << "\tforward_idx=" << forward_idx << std::endl;
+        log() << "\tbackward_idx=" << backward_idx << std::endl;
 
         edge_t & forward = edges_[forward_idx];
         edge_t & backward = edges_[backward_idx];
@@ -35,7 +36,7 @@ namespace structures {
 
     void edge_list::insert_edge(size_t new_edge_idx, size_t to)
     {
-        std::cerr << "edge_list: inserting edge " << new_edge_idx << " to " << to << std::endl;
+        log() << "edge_list: inserting edge " << new_edge_idx << " to " << to << std::endl;
 
         edge_t & new_edge = edges_[new_edge_idx];
         edge_t & new_twin = edges_[new_edge.twin_idx];
@@ -119,7 +120,7 @@ namespace structures {
     {
         contour_builder_type builder;
 
-        std::cerr << "contour\n\t";
+        log() << "contour\n\t";
 
         size_t start_idx = edge_idx;
         size_t cur_idx = start_idx;
@@ -129,12 +130,12 @@ namespace structures {
             edge_t & cur_edge = edges_[cur_idx];
 
             builder.add_point(pts_[cur_edge.start_idx]);
-            std::cerr << cur_edge.start_idx << " ";
+            log() << cur_edge.start_idx << " ";
 
             cur_idx = cur_edge.next_idx;
         } while(cur_idx != start_idx);
 
-        std::cerr << std::endl;
+        log() << std::endl;
 
         return builder.get_result();
     }

@@ -3,6 +3,7 @@
 #include <stack>
 #include "monotonic_triangulation.h"
 #include "util.h"
+#include "logging.h"
 
 namespace geom {
 namespace algorithms {
@@ -16,11 +17,11 @@ namespace triangulation {
 
         std::vector<triangle_type> triangulate()
         {
-            std::cerr << "monotonic trianglulation" << std::endl;
+            log() << "monotonic trianglulation" << std::endl;
 
             size_t start = find_start_vertex();
 
-            std::cerr << "\tstart vertex: " << start << std::endl;
+            log() << "\tstart vertex: " << start << std::endl;
 
             st_.push(std::make_pair(0, start));
 

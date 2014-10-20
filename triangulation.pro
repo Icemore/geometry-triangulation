@@ -33,6 +33,7 @@ HEADERS += src/stdafx.h \
            src/polygon.h \
            src/triangulation.h \
            src/util.h \
+           src/logging.h \
 
 SOURCES += src/main.cpp \
            src/contour_builder.cpp \
@@ -41,5 +42,6 @@ SOURCES += src/main.cpp \
            src/polygon.cpp \
            src/triangulation.cpp \
            src/util.cpp \
+           src/logging.cpp \
 
 LIBS += -Lvisualization -lvisualization
