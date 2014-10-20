@@ -5,6 +5,7 @@
 #include "triangulation.h"
 #include "util.h"
 #include "edge_list.h"
+#include "monotonic_triangulation.h"
 #include "geom/primitives/contour.h"
 #include "geom/primitives/segment.h"
 
@@ -12,6 +13,7 @@ using geom::structures::point_type;
 using geom::structures::segment_type;
 using geom::predicates::turn;
 using geom::predicates::turn_type;
+using geom::structures::contour_type;
 
 
 namespace geom {
@@ -26,20 +28,29 @@ namespace triangulation {
             convert_to_points(polygon);
         }
 
-        std::vector<segment_type> triangulate()
+        std::vector<triangle_type> triangulate()
         {
             auto vertex_cmp = [&](vertex_t const & v1, vertex_t const & v2)
                 {
                     return pts_[v1.idx] < pts_[v2.idx];
                 };
             boost::sort(vertexes_, vertex_cmp);
-            
+
             for(vertex_t const & vtx : vertexes_)
                 process_vertex(vtx);
 
-            edges_.get_closed_areas();
+            auto areas = edges_.get_closed_areas();
 
-            return std::vector<segment_type>();
+            std::vector<triangle_type> result;
+            for(contour_type const & contour : areas)
+            {
+                auto triangles = triangulate_monotonic(contour);
+                std::cerr << "triangles got" << std::endl;
+                result.insert(result.end(), triangles.begin(), triangles.end());
+            }
+
+            std::cerr << "triangulation finished" << std::endl;
+            return result;
         }
         
     private:
@@ -96,10 +107,6 @@ namespace triangulation {
             std::vector<point_type> const & pts_;
         };
 
-        std::vector<point_type> pts_;
-        std::map<edge_t, helper_t, edge_cmp> status_;
-        std::vector<vertex_t> vertexes_;
-        structures::edge_list edges_;
 
         void convert_to_points(polygon_type const & polygon)
         {
@@ -184,14 +191,13 @@ namespace triangulation {
             auto it = status_.upper_bound(edge);
 
             std::cerr << "updating status for " << idx  << " merge=" << merge << std::endl;
-            std::cerr << "\tit found " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
 
             if(it == status_.begin())
                 return helper_t(-1, false);
 
             --it;
 
-            std::cerr << "\tit prev " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
+            std::cerr << "\tit found " << "(" << it->first.from << " " << it->first.to << ") = " << it->second.idx << std::endl;
 
             helper_t old = it->second;
             it->second = helper_t(idx, merge); 
@@ -260,9 +266,14 @@ namespace triangulation {
                     break;
             }
         }
+
+        std::vector<point_type> pts_;
+        std::map<edge_t, helper_t, edge_cmp> status_;
+        std::vector<vertex_t> vertexes_;
+        structures::edge_list edges_;
     };
 
-    std::vector<segment_type> triangulate(polygon_type const & polygon)
+    std::vector<triangle_type> triangulate(polygon_type const & polygon)
     {
         triangulator solver(polygon);
         return solver.triangulate();

@@ -122,7 +122,7 @@ namespace structures {
         std::cerr << "contour\n\t";
 
         size_t start_idx = edge_idx;
-        size_t cur_idx = edge_idx;
+        size_t cur_idx = start_idx;
         do
         {
             used_edge[cur_idx] = true;

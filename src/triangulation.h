@@ -11,8 +11,6 @@ namespace triangulation {
     
     using geom::structures::triangle_type;
     using geom::structures::polygon_type;
-    using geom::structures::segment_type;
 
-    std::vector<segment_type> triangulate(polygon_type const & polygon);
-
+    std::vector<triangle_type> triangulate(polygon_type const & polygon);
 }}}

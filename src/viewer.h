@@ -27,10 +27,12 @@ private:
     std::unique_ptr<polygon_type> polygon_;
     point_type cursor_point_;
 
-    std::vector<segment_type> segments_;
+    std::vector<triangle_type> triangles_;
+    bool wired_triangles;
 };
 
 triangulation_viewer::triangulation_viewer()
+    : wired_triangles(true)
 {}
 
 namespace visualization {
@@ -50,6 +52,17 @@ namespace visualization {
 
 void triangulation_viewer::draw(drawer_type & drawer) const
 {
+    drawer.set_color(Qt::magenta);
+    for(triangle_type const & triangle : triangles_)
+        visualization::draw(drawer, triangle);
+
+    if(!wired_triangles)
+    {
+        drawer.set_color(Qt::gray);
+        for(triangle_type const & triangle : triangles_)
+            drawer.draw_filled_triangle(triangle);
+    }
+
     if(polygon_)
     {
         auto & bounds = polygon_->get_bounds();
@@ -64,7 +77,6 @@ void triangulation_viewer::draw(drawer_type & drawer) const
         }
     }
 
-
     if(contour_builder_)
     {
         drawer.set_color(Qt::yellow);
@@ -72,16 +84,12 @@ void triangulation_viewer::draw(drawer_type & drawer) const
         drawer.draw_line(segment_type(cursor_point_, contour_builder_->pts_.back()));
         drawer.draw_point(cursor_point_, 3);
     }
-
-    drawer.set_color(Qt::green);
-    for(auto seg : segments_)
-    {
-        drawer.draw_line(seg);
-    }
 }
 
 void triangulation_viewer::print(printer_type & printer) const
 {
+    printer.corner_stream() << "Wired triangles: " << wired_triangles << endl;
+
     if(contour_builder_)
     {
         if(polygon_)
@@ -115,17 +123,20 @@ bool triangulation_viewer::on_key(int key)
         case Qt::Key_Space:
             if(!contour_builder_) break;
 
-            if(polygon_)
-                polygon_->add_inner_bound(contour_builder_->get_result());
-            else
-                polygon_.reset(new polygon_type(contour_builder_->get_result()));
+            if(contour_builder_->pts_.size() > 2)
+            {
+                if(polygon_)
+                    polygon_->add_inner_bound(contour_builder_->get_result());
+                else
+                    polygon_.reset(new polygon_type(contour_builder_->get_result()));
+            }
             contour_builder_.reset();
             return true;
 
         case Qt::Key_R:
             polygon_.reset();
             contour_builder_.reset();
-            segments_.clear();
+            triangles_.clear();
             return true;
 
         case Qt::Key_Escape:
@@ -140,9 +151,14 @@ bool triangulation_viewer::on_key(int key)
             if(polygon_)
             {
                 contour_builder_.reset();
-                segments_ = geom::algorithms::triangulation::triangulate(*polygon_);
+                triangles_ = geom::algorithms::triangulation::triangulate(*polygon_);
                 return true;
             }
+            break;
+
+        case Qt::Key_W:
+            wired_triangles = !wired_triangles;
+            return true;
     }
 
     return false;

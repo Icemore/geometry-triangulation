@@ -34,10 +34,6 @@ namespace structures {
             {}
         };
 
-        std::vector<point_type> const & pts_;
-        std::vector<edge_t> edges_;
-        std::unordered_map<size_t, size_t> adjacent_edge_;
-
         void insert_edge(size_t new_edge_idx, size_t to);
         bool is_new_next(size_t new_edge_idx, size_t old_edge_idx) const;
         bool is_in_left_segment(point_type const & e,
@@ -45,6 +41,10 @@ namespace structures {
                                 point_type const & c,
                                 point_type const & n) const;
         contour_type get_area(size_t edge_idx, std::vector<bool> & used_edge);
+
+        std::vector<point_type> const & pts_;
+        std::vector<edge_t> edges_;
+        std::unordered_map<size_t, size_t> adjacent_edge_;
     };
 }
 }
