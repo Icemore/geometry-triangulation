@@ -52,13 +52,13 @@ namespace visualization {
 
 void triangulation_viewer::draw(drawer_type & drawer) const
 {
-    drawer.set_color(Qt::magenta);
+    drawer.set_color(Qt::darkRed);
     for(triangle_type const & triangle : triangles_)
         visualization::draw(drawer, triangle);
 
     if(!wired_triangles)
     {
-        drawer.set_color(Qt::gray);
+        drawer.set_color(Qt::darkGray);
         for(triangle_type const & triangle : triangles_)
             drawer.draw_filled_triangle(triangle);
     }
