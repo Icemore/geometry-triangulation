@@ -16,11 +16,6 @@ namespace structures {
         bounds.push_back(std::move(inner));
     }
 
-    bool polygon_type::isValid()
-    {
-        return true;
-    }
-    
     std::vector<contour_type> const & polygon_type::get_bounds() const
     {
         return bounds;
