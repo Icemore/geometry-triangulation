@@ -93,8 +93,11 @@ namespace structures {
         turn_type t1 = turn(n, o, c);
         turn_type t2 = turn(n, o, e);
 
-        assert(t1 != turn_type::COLLINEAR);
-        assert(t2 != turn_type::COLLINEAR);
+        if(t1 == turn_type::COLLINEAR ||
+           t2 == turn_type::COLLINEAR)
+        {
+            return turn(e, n, c) == turn_type::RIGHT;
+        }
 
         if(turn(e, o, c) == turn_type::RIGHT)
             return !(t1 == turn_type::RIGHT && t2 == turn_type::LEFT);
